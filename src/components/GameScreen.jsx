@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
+import Modal from "./Modal";
 
-function GameScreen({ setScreen, difficulty }) {
+function GameScreen({ setScreen, difficulty, stats, setStats }) {
   const [userScore, setUserScore] = useState(0);
   const [computerScore, setComputerScore] = useState(0);
   const [result, setResult] = useState("-");
@@ -9,6 +10,8 @@ function GameScreen({ setScreen, difficulty }) {
   const [isThinking, setIsThinking] = useState(false);
   const [pendingChoice, setPendingChoice] = useState(null);
   const [moveHistory, setMoveHistory] = useState([]);
+  const [matchWinner, setMatchWinner] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   const winningScore = 5;
   const choices = ["rock", "paper", "scissors"];
@@ -91,7 +94,18 @@ const getCounterMove = (move) => {
             const newScore = prev + 1;
             if (newScore >= winningScore) {
               setMatchOver(true);
-              setResult("🎉 You Won The Match!");
+              setMatchWinner("user");
+              setStats(prev => {
+                const newStreak = prev.currentStreak + 1;
+
+                return {
+                  totalMatches: prev.totalMatches + 1,
+                  wins: prev.wins + 1,
+                  losses: prev.losses,
+                  currentStreak: newStreak,
+                  bestStreak: Math.max(prev.bestStreak, newStreak)
+                };
+              });
               confetti({
                 particleCount: 120,
                 spread: 70,
@@ -108,7 +122,14 @@ const getCounterMove = (move) => {
             const newScore = prev + 1;
             if (newScore >= winningScore) {
               setMatchOver(true);
-              setResult("💻 Computer Won The Match!");
+              setMatchWinner("computer");
+              setStats(prev => ({
+                totalMatches: prev.totalMatches + 1,
+                wins: prev.wins,
+                losses: prev.losses + 1,
+                currentStreak: 0,
+                bestStreak: prev.bestStreak
+              }));
             } else {
               setResult("Computer Wins!");
             }
@@ -138,38 +159,118 @@ const getCounterMove = (move) => {
     setComputerScore(0);
     setResult("-");
     setMatchOver(false);
+    setMatchWinner(null);
     setIsThinking(false);
     setPendingChoice(null);
     setMoveHistory([]);
   };
 
   return (
-    <div>
-      <h2>Difficulty: {difficulty}</h2>
+  <div className="screen">
+    <h2>Difficulty: {difficulty}</h2>
 
-      <h3>Score: {userScore} - {computerScore}</h3>
+    <h3>Score: {userScore} - {computerScore}</h3>
+    <div style={{ marginTop: "10px" }}>
+  <p>You Progress:</p>
+  <div style={{ 
+    height: "10px", 
+    background: "#ddd", 
+    borderRadius: "10px",
+    overflow: "hidden"
+  }}>
+    <div style={{
+      height: "100%",
+      width: `${(userScore / 5) * 100}%`,
+      background: "#2ecc71",
+      transition: "width 0.3s ease"
+    }} />
+  </div>
 
-      <div>
-        <button disabled={matchOver || isThinking} onClick={() => playGame("rock")}>🪨</button>
-        <button disabled={matchOver || isThinking} onClick={() => playGame("paper")}>📄</button>
-        <button disabled={matchOver || isThinking} onClick={() => playGame("scissors")}>✂️</button>
+  <p style={{ marginTop: "10px" }}>Computer Progress:</p>
+  <div style={{ 
+    height: "10px", 
+    background: "#ddd", 
+    borderRadius: "10px",
+    overflow: "hidden"
+  }}>
+    <div style={{
+      height: "100%",
+      width: `${(computerScore / 5) * 100}%`,
+      background: "#e74c3c",
+      transition: "width 0.3s ease"
+    }} />
+  </div>
+</div>
+
+    {matchOver && (
+      <div className="winner-banner">
+        <h2>
+          {matchWinner === "user"
+            ? "🏆 You Are The Champion!"
+            : "🤖 Computer Dominates This Time!"}
+        </h2>
       </div>
+    )}
+    {matchOver && (
+      <div style={{
+        marginTop: "20px",
+        padding: "15px",
+        borderRadius: "12px",
+        background: "rgba(0,0,0,0.05)"
+      }}>
+        <h3>📊 Game Statistics</h3>
+        <p>Total Matches: {stats.totalMatches}</p>
+        <p>Total Wins: {stats.wins}</p>
+        <p>Total Losses: {stats.losses}</p>
+        <p>Current Win Streak: {stats.currentStreak}</p>
+        <p>Best Win Streak: {stats.bestStreak}</p>
+      </div>
+    )}    
 
-      <h3>{result}</h3>
-
-      {matchOver && (
-        <button onClick={resetMatch}>
-          Play Again
-        </button>
-      )}
-
-      <br /><br />
-
-      <button onClick={() => setScreen("start")}>
-        Back To Menu
-      </button>
+    <div className="choices">
+      <button disabled={matchOver || isThinking} onClick={() => playGame("rock")}>🪨</button>
+      <button disabled={matchOver || isThinking} onClick={() => playGame("paper")}>📄</button>
+      <button disabled={matchOver || isThinking} onClick={() => playGame("scissors")}>✂️</button>
     </div>
-  );
+
+    <h3
+      className={
+        result.includes("You Win")
+          ? "win-text"
+          : result.includes("Computer")
+          ? "lose-text"
+          : result.includes("Draw")
+          ? "draw-text"
+          : ""
+      }
+    >
+      {result}
+  </h3>
+
+
+    {matchOver && (
+      <button onClick={resetMatch}>
+        Play Again
+      </button>
+    )}
+
+    <button onClick={() => setShowModal(true)}>
+      Back To Menu
+    </button>
+    {showModal && (
+      <Modal
+        title="Are you sure?"
+        message="Your current match progress will be lost."
+        onCancel={() => setShowModal(false)}
+        onConfirm={() => {
+          resetMatch();
+          setShowModal(false);
+          setScreen("start");
+        }}
+      />
+    )}
+  </div>
+);
 }
 
 export default GameScreen;
