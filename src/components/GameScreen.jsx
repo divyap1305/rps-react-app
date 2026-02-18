@@ -1,6 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import confetti from "canvas-confetti";
+import { getComputerChoice } from "../utils/gameLogic";
 import Modal from "./Modal";
+import { useCallback } from "react";
 
 function GameScreen({ setScreen, difficulty, stats, setStats }) {
   const [userScore, setUserScore] = useState(0);
@@ -12,66 +15,33 @@ function GameScreen({ setScreen, difficulty, stats, setStats }) {
   const [moveHistory, setMoveHistory] = useState([]);
   const [matchWinner, setMatchWinner] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
 
   const winningScore = 5;
   const choices = ["rock", "paper", "scissors"];
+  const computerChoice = getComputerChoice(
+    difficulty,
+    pendingChoice,
+    moveHistory
+  );
 
-  const getComputerChoice = (userChoice) => {
-
-  // Easy mode → random
-  if (difficulty === "easy") {
-    return choices[Math.floor(Math.random() * 3)];
-  }
-
-  // Medium → 50% smart
-  if (difficulty === "medium") {
-    if (Math.random() < 0.5) {
-      return getCounterMove(userChoice);
-    }
-    return choices[Math.floor(Math.random() * 3)];
-  }
-
-  // Hard → Pattern-based AI
-  if (difficulty === "hard") {
-
-    if (moveHistory.length >= 3) {
-
-      const moveCount = {
-        rock: 0,
-        paper: 0,
-        scissors: 0
-      };
-
-      moveHistory.forEach(move => {
-        moveCount[move]++;
-      });
-
-      const predictedMove = Object.keys(moveCount).reduce((a, b) =>
-        moveCount[a] > moveCount[b] ? a : b
-      );
-
-      return getCounterMove(predictedMove);
-    }
-
-    return choices[Math.floor(Math.random() * 3)];
-  }
-};
-const getCounterMove = (move) => {
-  const counter = {
-    rock: "paper",
-    paper: "scissors",
-    scissors: "rock"
+  
+  const getCounterMove = (move) => {
+    const counter = {
+      rock: "paper",
+      paper: "scissors",
+      scissors: "rock"
+    };
+    return counter[move];
   };
-  return counter[move];
-};
 
-  const playGame = (userChoice) => {
+  const playGame = useCallback((userChoice) => {
     if (matchOver || isThinking) return;
 
     setIsThinking(true);
     setPendingChoice(userChoice);
     setResult("Computer is thinking...");
-  };
+  }, [matchOver, isThinking]);
 
   // useEffect handles delay logic
   useEffect(() => {
@@ -265,7 +235,7 @@ const getCounterMove = (move) => {
         onConfirm={() => {
           resetMatch();
           setShowModal(false);
-          setScreen("start");
+          navigate("/"); // Navigate back to the start screen
         }}
       />
     )}

@@ -1,4 +1,7 @@
+import { useNavigate } from "react-router-dom";
+
 function StartScreen({ setScreen, difficulty, setDifficulty }) {
+  const navigate = useNavigate();
   return (
   <div className="screen">
     <h2>Select Difficulty</h2>
@@ -14,8 +17,11 @@ function StartScreen({ setScreen, difficulty, setDifficulty }) {
 
     <br /><br />
 
-    <button onClick={() => setScreen("game")}>
+    <button onClick={() => navigate("/game")}>
       Start Game
+    </button>
+    <button onClick={() => navigate("/stats")}>
+      View Statistics
     </button>
   </div>
 );

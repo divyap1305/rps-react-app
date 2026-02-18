@@ -1,19 +1,23 @@
 import { useState, useEffect } from "react";
+import { Routes, Route } from "react-router-dom";
 import StartScreen from "./components/StartScreen";
 import GameScreen from "./components/GameScreen";
+import StatsScreen from "./components/StatsScreen";
+import useLocalStorage from "./hooks/useLocalStorage";
 import "./App.css";
 
 function App() {
-  const [screen, setScreen] = useState("start");
   const [difficulty, setDifficulty] = useState("easy");
   const [darkMode, setDarkMode] = useState(false);
-  const [stats, setStats] = useState({
+  const initialStats = {
   totalMatches: 0,
   wins: 0,
   losses: 0,
   currentStreak: 0,
   bestStreak: 0
-});
+};
+
+const [stats, setStats] = useLocalStorage("gameStats", initialStats);
 
   // Persist dark mode
   useEffect(() => {
@@ -50,22 +54,47 @@ function App() {
         {darkMode ? "☀ Light" : "🌙 Dark"}
       </button>
 
-      {screen === "start" && (
-        <StartScreen
-          setScreen={setScreen}
-          difficulty={difficulty}
-          setDifficulty={setDifficulty}
+       <Routes>
+        <Route
+          path="/"
+          element={
+            <StartScreen
+              difficulty={difficulty}
+              setDifficulty={setDifficulty}
+            />
+          }
         />
-      )}
 
-      {screen === "game" && (
-        <GameScreen
-          setScreen={setScreen}
-          difficulty={difficulty}
-          stats={stats}
-          setStats={setStats}
+        <Route
+          path="/game"
+          element={
+            <GameScreen
+              difficulty={difficulty}
+              stats={stats}
+              setStats={setStats}
+            />
+          }
         />
-      )}
+
+        <Route
+          path="/stats"
+          element={
+            <StatsScreen
+              stats={stats}
+            />
+          }
+        />
+
+        <Route
+          path="*"
+          element={
+            <div className="screen">
+              <h2>404 - Page Not Found</h2>
+            </div>
+          }
+        />
+        
+      </Routes>
     </div>
   );
 }
