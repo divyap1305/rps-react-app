@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import confetti from "canvas-confetti";
 import { getComputerChoice } from "../utils/gameLogic";
 import Modal from "./Modal";
-import { useCallback } from "react";
 
 function GameScreen({ setScreen, difficulty, stats, setStats }) {
   const [userScore, setUserScore] = useState(0);
@@ -19,21 +18,6 @@ function GameScreen({ setScreen, difficulty, stats, setStats }) {
 
   const winningScore = 5;
   const choices = ["rock", "paper", "scissors"];
-  const computerChoice = getComputerChoice(
-    difficulty,
-    pendingChoice,
-    moveHistory
-  );
-
-  
-  const getCounterMove = (move) => {
-    const counter = {
-      rock: "paper",
-      paper: "scissors",
-      scissors: "rock"
-    };
-    return counter[move];
-  };
 
   const playGame = useCallback((userChoice) => {
     if (matchOver || isThinking) return;
@@ -48,7 +32,7 @@ function GameScreen({ setScreen, difficulty, stats, setStats }) {
     if (!isThinking || !pendingChoice) return;
 
     const timer = setTimeout(() => {
-      const computerChoice = getComputerChoice(pendingChoice);
+      const computerChoice = getComputerChoice(difficulty, pendingChoice, moveHistory);
 
       if (pendingChoice === computerChoice) {
         setResult("Draw!");
